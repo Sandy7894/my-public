@@ -74,16 +74,26 @@ resource "aws_subnet" "private" {
   }
 }
 
-//creating EIP for NAT gateway
 resource "aws_eip" "test-eip" {
   vpc = true
 }
 
-//assigning NAT gateway to private subnet to get required dependencies
-
 resource "aws_nat_gateway" "test-nat" {
   allocation_id = aws_eip.test-eip.id
-  subnet_id = aws_subnet.private.id
+  subnet_id = aws_subnet.public-1.id
+}
+
+resource "aws_route_table" "private" {
+  vpc_id                    = var.vpc_id
+  route {
+    cidr_block              = "0.0.0.0/0"
+    nat_gateway_id          = aws_nat_gateway.test-nat.id
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  subnet_id                 = aws_subnet.private.id
+  route_table_id            = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "public-1" {
